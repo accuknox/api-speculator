@@ -9,11 +9,16 @@ import (
 )
 
 type API struct {
-	ClusterName   string `json:"clusterName,omitempty"`
-	ServiceName   string `json:"serviceName,omitempty"`
-	RequestMethod string `json:"requestMethod"`
-	RequestPath   string `json:"requestPath"`
-	Occurrences   int    `json:"occurrences,omitempty"`
+	ClusterName   string      `json:"clusterName,omitempty"`
+	ServiceName   string      `json:"serviceName,omitempty"`
+	RequestMethod string      `json:"requestMethod"`
+	RequestPath   string      `json:"requestPath"`
+	Occurrences   int         `json:"occurrences,omitempty"`
+	Severity      string      `json:"severity,omitempty"`
+	StatusCode    int         `json:"status_code,omitempty"`
+	Port          int         `json:"port,omitempty"`
+	Request       interface{} `json:"request,omitempty"`
+	Response      interface{} `json:"response,omitempty"`
 }
 
 type apiReport struct {

@@ -14,6 +14,7 @@ import (
 	"github.com/5gsec/api-speculator/internal/apievent"
 	"github.com/5gsec/api-speculator/internal/apispec"
 	"github.com/5gsec/api-speculator/internal/pathtrie"
+	"github.com/5gsec/api-speculator/internal/util"
 )
 
 func (m *Manager) findShadowAndZombieApi(trie pathtrie.PathTrie, events *hashset.Set, model *libopenapi.DocumentModel[v3.Document]) ([]API, []API) {
@@ -51,6 +52,11 @@ func (m *Manager) findShadowAndZombieApi(trie pathtrie.PathTrie, events *hashset
 					RequestMethod: event.RequestMethod,
 					RequestPath:   requestPath,
 					Occurrences:   event.Occurrences,
+					Severity:      util.SeverityCritical,
+					Request:       event.Request,
+					Response:      event.Response,
+					StatusCode:    event.ResponseCode,
+					Port:          event.Port,
 				})
 			}
 		}
@@ -66,6 +72,11 @@ func (m *Manager) findShadowAndZombieApi(trie pathtrie.PathTrie, events *hashset
 							RequestMethod: event.RequestMethod,
 							RequestPath:   requestPath,
 							Occurrences:   event.Occurrences,
+							Severity:      util.SeverityHigh,
+							Request:       event.Request,
+							Response:      event.Response,
+							StatusCode:    event.ResponseCode,
+							Port:          event.Port,
 						})
 					}
 				}
@@ -108,6 +119,7 @@ func (m *Manager) findOrphanApi(events *hashset.Set, model *libopenapi.DocumentM
 				orphanApis = append(orphanApis, API{
 					RequestMethod: requestMethod,
 					RequestPath:   requestPath,
+					Severity:      util.SeverityLow,
 				})
 			}
 		}

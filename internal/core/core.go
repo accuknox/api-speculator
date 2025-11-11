@@ -71,7 +71,7 @@ func Run(ctx context.Context, configFilePath string) {
 
 	shadowApis, zombieApis := mgr.findShadowAndZombieApi(trie, events, model)
 	orphanApis := mgr.findOrphanApi(events, model)
-	if err := mgr.exportJsonReport(mgr.Cfg.Exporter.JsonReportFilePath, shadowApis, zombieApis, orphanApis); err != nil {
+	if err := mgr.exportJsonReport(mgr.Cfg.Exporter.JsonReportFilePath, shadowApis, zombieApis, orphanApis, collectionNames); err != nil {
 		mgr.Logger.Error(err)
 		return
 	}

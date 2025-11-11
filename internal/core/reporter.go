@@ -22,20 +22,22 @@ type API struct {
 }
 
 type apiReport struct {
-	TenantId   int    `json:"tenantId"`
-	ScanName   string `json:"scan_name"`
-	ShadowAPIs []API  `json:"shadowApis,omitempty"`
-	ZombieAPIs []API  `json:"zombieApis,omitempty"`
-	OrphanAPIs []API  `json:"orphanApis,omitempty"`
+	TenantId    int      `json:"tenantId"`
+	ScanName    string   `json:"scan_name"`
+	Collections []string `json:"collections,omitempty"`
+	ShadowAPIs  []API    `json:"shadowApis,omitempty"`
+	ZombieAPIs  []API    `json:"zombieApis,omitempty"`
+	OrphanAPIs  []API    `json:"orphanApis,omitempty"`
 }
 
-func (m *Manager) exportJsonReport(reportFilePath string, shadowApis, zombieApis, orphanApis []API) error {
+func (m *Manager) exportJsonReport(reportFilePath string, shadowApis, zombieApis, orphanApis []API, collections []string) error {
 	report := apiReport{
-		TenantId:   m.Cfg.Environment.TenantId,
-		ScanName:   m.Cfg.ScanName,
-		ShadowAPIs: shadowApis,
-		ZombieAPIs: zombieApis,
-		OrphanAPIs: orphanApis,
+		TenantId:    m.Cfg.Environment.TenantId,
+		ScanName:    m.Cfg.ScanName,
+		Collections: collections,
+		ShadowAPIs:  shadowApis,
+		ZombieAPIs:  zombieApis,
+		OrphanAPIs:  orphanApis,
 	}
 
 	f, err := os.OpenFile(reportFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o666)

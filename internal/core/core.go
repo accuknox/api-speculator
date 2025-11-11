@@ -51,10 +51,13 @@ func Run(ctx context.Context, configFilePath string) {
 	}
 	mgr.DBHandler = dbHandler
 
-	collectionName := mgr.Cfg.Database.Collection
+	eventCollectionName := mgr.Cfg.Database.Collection
 	clusterId := mgr.Cfg.Environment.ClusterId
+	apiCollectionName := mgr.Cfg.APICollections.DbCollectionName
+	collectionNames := mgr.Cfg.APICollections.CollectionNames
+	endpoints := mgr.Cfg.Endpoints
 
-	events, err := mgr.findDocuments(collectionName, clusterId)
+	events, err := mgr.findApiOperationDocuments(eventCollectionName, apiCollectionName, clusterId, collectionNames, endpoints)
 	if err != nil {
 		mgr.Logger.Errorf("failed to find documents: %v", err)
 		return

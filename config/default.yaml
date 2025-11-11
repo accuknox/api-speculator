@@ -18,3 +18,16 @@ exporter:
   jsonReportFilePath: report.json
 
 scanName: default-openapi-spec-scan  
+
+apiCollections:
+  # The MongoDB collection name used for storing API collections
+  dbCollectionName: <collectionName>
+
+  # List of API collection names to be used for the scan
+  collectionNames:
+    - "collection-1"
+    - "collection-2"    
+
+endpoints:
+  - "endpoint-1"
+  - "endpoint-2"

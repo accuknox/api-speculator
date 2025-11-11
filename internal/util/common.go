@@ -4,6 +4,7 @@
 package util
 
 import (
+	"fmt"
 	"reflect"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -42,6 +43,13 @@ func ToInt(v interface{}) int {
 		return int(t)
 	case uint64:
 		return int(t)
+	case string:
+		var n int
+		_, err := fmt.Sscanf(t, "%d", &n)
+		if err == nil {
+			return n
+		}
+		return 0
 	default:
 		return 0
 	}

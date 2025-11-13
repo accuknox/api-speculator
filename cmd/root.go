@@ -35,7 +35,7 @@ By analyzing API traffic in conjunction with your API specifications (e.g., Open
   * Shadow APIs: Endpoints that are implemented and functional but not documented in your API specification.
   * Zombie APIs: Endpoints that are deprecated or abandoned in your API specification but are still in use.
   * Orphan APIs: Endpoints that are defined in your API specification but are never invoked in the observed traffic.
-  * Active APIs: Endpoints that are defined in your API specification but also invoked in the observed traffic.
+  * Active APIs: Endpoints that are defined in your API specification and are also invoked in observed traffic.
 `,
 	//Long: `A Utility to identify Shadow and Zombie APIs provided API Specification`,
 	Run: func(cmd *cobra.Command, args []string) {

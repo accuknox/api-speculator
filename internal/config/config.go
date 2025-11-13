@@ -40,7 +40,7 @@ type APICollections struct {
 type Configuration struct {
 	Database       Database       `json:"database"`
 	Environment    Environment    `json:"environment"`
-	OpenAPISpec    string         `json:"openAPISpec"`
+	OpenAPISpecs   []string       `json:"openAPISpecs"`
 	Exporter       Exporter       `json:"exporter,omitempty"`
 	ScanName       string         `json:"scanName"`
 	Endpoints      []string       `json:"endpoints,omitempty"`
@@ -64,7 +64,7 @@ func (c *Configuration) validate() error {
 		return fmt.Errorf("configuration does not contain a valid database collection name")
 	}
 
-	if c.OpenAPISpec == "" {
+	if len(c.OpenAPISpecs) == 0 {
 		return fmt.Errorf("configuration does not contain a valid OpenAPI Specification filepath or URL")
 	}
 

@@ -5,6 +5,7 @@ package core
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -58,11 +59,11 @@ func (m *Manager) exportJsonReport(reportFilePath string, shadowApis, zombieApis
 		})
 	}
 
-	// Attach associations to each finding using the full modelsMap
-	attachAssociatedSpecFilesToFindings(shadowApis, modelsMap, m)
-	attachAssociatedSpecFilesToFindings(zombieApis, modelsMap, m)
-	attachAssociatedSpecFilesToFindings(orphanApis, modelsMap, m)
-	attachAssociatedSpecFilesToFindings(activeApis, modelsMap, m)
+	// Attach associations to each finding
+	attachAssociatedSpecFilesToFindings(shadowApis, modelsMap)
+	attachAssociatedSpecFilesToFindings(zombieApis, modelsMap)
+	attachAssociatedSpecFilesToFindings(orphanApis, modelsMap)
+	attachAssociatedSpecFilesToFindings(activeApis, modelsMap)
 
 	nowUTC := time.Now().UTC()
 
@@ -102,7 +103,7 @@ func (m *Manager) exportJsonReport(reportFilePath string, shadowApis, zombieApis
 
 // attachAssociatedSpecFilesToFindings inspects each finding and assigns the list
 // of spec files (from modelsMap) that actually define that endpoint+method.
-func attachAssociatedSpecFilesToFindings(apis []API, modelsMap map[string]*libopenapi.DocumentModel[v3.Document], m *Manager) {
+func attachAssociatedSpecFilesToFindings(apis []API, modelsMap map[string]*libopenapi.DocumentModel[v3.Document]) {
 	if len(apis) == 0 || len(modelsMap) == 0 {
 		return
 	}
@@ -120,7 +121,7 @@ func attachAssociatedSpecFilesToFindings(apis []API, modelsMap map[string]*libop
 				continue
 			}
 
-			// 1) Direct path lookup first (exact path key)
+			// Direct path lookup first (exact path key)
 			if pi, ok := model.Model.Paths.PathItems.Get(reqPath); ok {
 				// ensure operation for method exists
 				for ops := pi.GetOperations().First(); ops != nil; ops = ops.Next() {
@@ -134,7 +135,7 @@ func attachAssociatedSpecFilesToFindings(apis []API, modelsMap map[string]*libop
 				}
 			}
 
-			// 2) Try parameterized/unified match by iterating spec paths
+			// Try parameterized/unified match by iterating spec paths
 			for pathItems := model.Model.Paths.PathItems.First(); pathItems != nil; pathItems = pathItems.Next() {
 				specPathUnified := apispec.UnifyParameterizedPathIfApplicable(pathItems.Key(), true)
 				if specPathUnified == reqPath {
@@ -164,4 +165,19 @@ func getModelTitleSafe(model *libopenapi.DocumentModel[v3.Document]) string {
 		return model.Model.Info.Title
 	}
 	return ""
+}
+
+// RemoveDuplicateFindings removes duplicate API findings based on RequestMethod + RequestPath + ServiceName.
+func RemoveDuplicateFindings(findings []API) []API {
+	unique := make(map[string]API, len(findings))
+	for _, f := range findings {
+		key := fmt.Sprintf("%s|%s|%s", strings.ToUpper(f.RequestMethod), f.RequestPath, f.ServiceName)
+		unique[key] = f
+	}
+
+	result := make([]API, 0, len(unique))
+	for _, v := range unique {
+		result = append(result, v)
+	}
+	return result
 }

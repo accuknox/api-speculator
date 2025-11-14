@@ -12,7 +12,10 @@ environment:
   clusterId: <yourClusterId>
   tenantId: <yourTenantId>
 
-openAPISpec: <urlOrPath> # Either filepath or URL
+openAPISpecs:
+  # List of OpenAPI specs (Either filepath or URL)
+  - <urlOrPath1>
+  - <urlOrPath2>
 
 exporter:
   jsonReportFilePath: report.json

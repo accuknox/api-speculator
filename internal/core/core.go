@@ -66,14 +66,50 @@ func Run(ctx context.Context, configFilePath string) {
 		return
 	}
 
-	model, _ := mgr.buildModel(mgr.Cfg.OpenAPISpec)
-	trie := mgr.buildTrie(model)
+	// Load all spec models
+	modelsMap := mgr.loadSpecModels(mgr.Cfg.OpenAPISpecs)
+	if len(modelsMap) == 0 {
+		mgr.Logger.Errorf("no valid API specs loaded; aborting")
+		return
+	}
 
-	shadowApis, zombieApis := mgr.findShadowAndZombieApi(trie, events, model)
-	orphanApis := mgr.findOrphanApi(events, model)
-	if err := mgr.exportJsonReport(mgr.Cfg.Exporter.JsonReportFilePath, shadowApis, zombieApis, orphanApis, collectionNames); err != nil {
+	var allShadowApis, allZombieApis []API
+	var allOrphanApis, allActiveApis []API
+
+	// Iterate over each loaded spec and gather findings
+	for fileName, specModel := range modelsMap {
+		if specModel == nil {
+			continue
+		}
+
+		mgr.Logger.Infof("Processing findings for spec: %s", fileName)
+		trie := mgr.buildTrie(specModel)
+
+		shadowApis, zombieApis := mgr.findShadowAndZombieApi(trie, events, specModel)
+		orphanApis := mgr.findOrphanApi(events, specModel)
+		activeApis := mgr.findActiveApis(events, specModel)
+
+		allShadowApis = append(allShadowApis, shadowApis...)
+		allZombieApis = append(allZombieApis, zombieApis...)
+		allOrphanApis = append(allOrphanApis, orphanApis...)
+		allActiveApis = append(allActiveApis, activeApis...)
+	}
+
+	// Deduplicate results across all specs
+	allShadowApis = RemoveDuplicateFindings(allShadowApis)
+	allZombieApis = RemoveDuplicateFindings(allZombieApis)
+	allOrphanApis = RemoveDuplicateFindings(allOrphanApis)
+	allActiveApis = RemoveDuplicateFindings(allActiveApis)
+
+	// Export combined findings
+	if err := mgr.exportJsonReport(
+		mgr.Cfg.Exporter.JsonReportFilePath,
+		allShadowApis, allZombieApis, allOrphanApis, allActiveApis,
+		collectionNames, modelsMap,
+	); err != nil {
 		mgr.Logger.Error(err)
 		return
 	}
+
 	mgr.Logger.Infof("successfully generated `%s` JSON report", mgr.Cfg.Exporter.JsonReportFilePath)
 }

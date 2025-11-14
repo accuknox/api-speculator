@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/pb33f/libopenapi"
@@ -79,7 +80,7 @@ func (m *Manager) loadSpecModels(apiSpecFiles []string) map[string]*libopenapi.D
 			m.Logger.Warnf("failed to load spec '%s': %v (skipping)", f, err)
 			continue
 		}
-		models[f] = model
+		models[filepath.Base(f)] = model
 	}
 	return models
 }

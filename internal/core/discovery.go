@@ -110,6 +110,7 @@ func (m *Manager) findShadowAndZombieApis(events *hashset.Set, modelsMap map[str
 					StatusCode:    event.ResponseCode,
 					Port:          event.Port,
 					Type:          util.FindingTypeShadow,
+					LastSeenTime:  event.LastSeenTime,
 				})
 			}
 		}
@@ -137,6 +138,7 @@ func (m *Manager) findShadowAndZombieApis(events *hashset.Set, modelsMap map[str
 									StatusCode:    event.ResponseCode,
 									Port:          event.Port,
 									Type:          util.FindingTypeZombie,
+									LastSeenTime:  event.LastSeenTime,
 								})
 							}
 						}

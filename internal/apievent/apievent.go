@@ -13,4 +13,5 @@ type ApiEvent struct {
 	Port          int         `json:"port,omitempty"`
 	Request       interface{} `json:"request,omitempty"`
 	Response      interface{} `json:"response,omitempty"`
+	LastSeenTime  int         `json:"last_seen_time,omitempty"`
 }

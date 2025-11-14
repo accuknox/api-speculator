@@ -3,23 +3,78 @@ package core
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
+	"github.com/5gsec/api-speculator/internal/apievent"
+	"github.com/5gsec/api-speculator/internal/config"
+	"github.com/5gsec/api-speculator/internal/util"
 	"github.com/emirpasic/gods/sets/hashset"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
-	"github.com/5gsec/api-speculator/internal/apievent"
-	"github.com/5gsec/api-speculator/internal/util"
 )
 
 // findApiOperationDocuments fetches API documents based on collectionName, optional clusterId,
 // and optional collectionCriteria. Returns a set of unique apievent.
-func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionName string, clusterId int, collectionNames, endpoints []string) (*hashset.Set, error) {
+func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionName string, clusterId int, collectionNames, endpoints []string, scanRuntimeWindow config.RuntimeWindow) (*hashset.Set, error) {
 	filter := bson.D{{Key: "operation", Value: "Api"}}
+	filter = append(filter, bson.E{Key: "archived", Value: false})
 	if clusterId != 0 {
 		filter = append(filter, bson.E{Key: "cluster_id", Value: clusterId})
+	}
+	timeFilter := bson.D{}
+	if scanRuntimeWindow.Start != "" {
+		scanRuntimeWindowInt, err := strconv.Atoi(scanRuntimeWindow.Start)
+		if err != nil {
+			m.Logger.Errorf("invalid time duration: %v", err)
+			return nil, fmt.Errorf("invalid time duration: %s", scanRuntimeWindow.Start)
+		}
+		timeFilter = append(timeFilter, bson.E{Key: "$gte", Value: scanRuntimeWindowInt})
+	}
+	if scanRuntimeWindow.End != "" {
+		scanRuntimeWindowInt, err := strconv.Atoi(scanRuntimeWindow.End)
+		if err != nil {
+			m.Logger.Errorf("invalid time duration: %v", err)
+			return nil, fmt.Errorf("invalid time duration: %s", scanRuntimeWindow.End)
+		}
+		timeFilter = append(timeFilter, bson.E{Key: "$lte", Value: scanRuntimeWindowInt})
+	}
+	if len(timeFilter) > 0 {
+		filter = append(filter, bson.E{Key: "updated_time", Value: timeFilter})
+	}
+
+	if scanRuntimeWindow.Value != "" && len(timeFilter) == 0 {
+		durationStr := scanRuntimeWindow.Value
+		// last character is unit, rest is number
+		unit := durationStr[len(durationStr)-1:]
+		numStr := durationStr[:len(durationStr)-1]
+
+		num, err := strconv.Atoi(numStr)
+		if err != nil || num <= 0 {
+			return nil, fmt.Errorf("invalid duration number: %s", numStr)
+		}
+
+		var duration time.Duration
+		switch unit {
+		case "m":
+			duration = time.Duration(num) * time.Minute
+		case "h":
+			duration = time.Duration(num) * time.Hour
+		case "d":
+			duration = time.Duration(num) * 24 * time.Hour
+		default:
+			return nil, fmt.Errorf("unsupported duration unit: %s", unit)
+		}
+
+		// Epoch seconds cutoff
+		cutoff := time.Now().Add(-duration).Unix()
+
+		filter = append(filter, bson.E{
+			Key:   "updated_time",
+			Value: bson.D{{Key: "$gte", Value: cutoff}},
+		})
 	}
 
 	// if apiCollectionName and nameList are provided, fetch criteria and build filter
@@ -59,6 +114,7 @@ func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionNa
 	projection := bson.D{
 		{Key: "_id", Value: 0},
 		{Key: "cluster_name", Value: 1},
+		{Key: "updated_time", Value: 1},
 		{Key: "api_event.http.request", Value: 1},
 		{Key: "api_event.http.response", Value: 1},
 		{Key: "api_event.network.destination.port", Value: 1},
@@ -78,7 +134,6 @@ func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionNa
 	}()
 
 	apiEvents := hashset.New()
-
 	for cursor.Next(m.Ctx) {
 		var doc bson.M
 		if err := cursor.Decode(&doc); err != nil {
@@ -87,6 +142,8 @@ func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionNa
 		}
 
 		clusterName := util.ToString(doc["cluster_name"])
+
+		lastSeenTime := util.ToInt(doc["updated_time"])
 
 		apiEvent := util.ToBsonM(doc["api_event"])
 		if apiEvent == nil {
@@ -148,6 +205,7 @@ func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionNa
 			Port:          port,
 			Request:       requestBody,
 			Response:      responseBody,
+			LastSeenTime:  lastSeenTime,
 		})
 	}
 

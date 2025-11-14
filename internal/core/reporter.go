@@ -28,6 +28,7 @@ type API struct {
 	Response               interface{}   `json:"response,omitempty"`
 	AssociatedApiSpecFiles []ApiSpecFile `json:"associatedApiSpecFiles,omitempty"`
 	Type                   string        `json:"type,omitempty"`
+	LastSeenTime           int           `json:"lastSeenTime,omitempty"`
 }
 
 type apiReport struct {

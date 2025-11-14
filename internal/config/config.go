@@ -45,6 +45,13 @@ type Configuration struct {
 	ScanName       string         `json:"scanName"`
 	Endpoints      []string       `json:"endpoints,omitempty"`
 	APICollections APICollections `json:"apiCollections,omitempty"`
+	RuntimeWindow  RuntimeWindow  `json:"runtimeWindow,omitempty"`
+}
+
+type RuntimeWindow struct {
+	Start string `json:"start,omitempty"`
+	End   string `json:"end,omitempty"`
+	Value string `json:"value,omitempty"` // e.g., "5m", "5h" "5d"
 }
 
 func (c *Configuration) validate() error {

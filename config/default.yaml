@@ -30,6 +30,11 @@ apiCollections:
   collectionNames:
     - "collection-1"
     - "collection-2"    
+    
+runtimeWindow:
+  start: "1763031788" 
+  end: "1763031788"  
+  value: "30d"                 
 
 endpoints:
   - "endpoint-1"

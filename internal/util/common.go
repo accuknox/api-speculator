@@ -14,6 +14,14 @@ const (
 	SeverityHigh     = "high"
 	SeverityCritical = "critical"
 	SeverityLow      = "low"
+	SeverityInfo     = "info"
+)
+
+const (
+	FindingTypeShadow = "shadow"
+	FindingTypeZombie = "zombie"
+	FindingTypeOrphan = "orphan"
+	FindingTypeActive = "active"
 )
 
 // IsNil checks if the given interface is nil or a nil pointer.

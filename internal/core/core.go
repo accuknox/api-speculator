@@ -62,18 +62,33 @@ func Run(ctx context.Context, configFilePath string) {
 		mgr.Logger.Errorf("failed to find documents: %v", err)
 		return
 	}
-	if events.Size() == 0 {
+	if events == nil || events.Size() == 0 {
+		mgr.Logger.Info("no events found; exiting")
 		return
 	}
 
-	model, _ := mgr.buildModel(mgr.Cfg.OpenAPISpec)
-	trie := mgr.buildTrie(model)
+	// Load all spec models (map[fileName]*libopenapi.DocumentModel)
+	modelsMap := mgr.loadSpecModels(mgr.Cfg.OpenAPISpecs)
+	if len(modelsMap) == 0 {
+		mgr.Logger.Errorf("no valid API specs loaded; aborting")
+		return
+	}
 
-	shadowApis, zombieApis := mgr.findShadowAndZombieApi(trie, events, model)
-	orphanApis := mgr.findOrphanApi(events, model)
-	if err := mgr.exportJsonReport(mgr.Cfg.Exporter.JsonReportFilePath, shadowApis, zombieApis, orphanApis, collectionNames); err != nil {
+	mgr.Logger.Infof("loaded %d spec(s); computing findings across all specs", len(modelsMap))
+
+	allShadowApis, allZombieApis := mgr.findShadowAndZombieApis(events, modelsMap)
+	allOrphanApis := mgr.findOrphanApis(events, modelsMap)
+	allActiveApis := mgr.findActiveApis(events, modelsMap)
+
+	// Export findings
+	if err := mgr.exportJsonReport(
+		mgr.Cfg.Exporter.JsonReportFilePath,
+		allShadowApis, allZombieApis, allOrphanApis, allActiveApis,
+		collectionNames, modelsMap,
+	); err != nil {
 		mgr.Logger.Error(err)
 		return
 	}
+
 	mgr.Logger.Infof("successfully generated `%s` JSON report", mgr.Cfg.Exporter.JsonReportFilePath)
 }

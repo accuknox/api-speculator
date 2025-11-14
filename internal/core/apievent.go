@@ -85,25 +85,27 @@ func (m *Manager) findApiOperationDocuments(eventCollectionName, apiCollectionNa
 			return nil, fmt.Errorf("failed to get criteria by collections: %w", err)
 		}
 
-		var allCriteria []FilterCriteria
-		for _, criteria := range criteriaMap {
-			allCriteria = append(allCriteria, criteria...)
-		}
+		// collect OR filters from each collection
+		var orFilters bson.A
 
-		if len(allCriteria) > 0 {
-			criteriaFilter, err := buildMongoFilterCriteria(allCriteria)
+		for _, criteria := range criteriaMap {
+
+			criteriaFilter, err := buildMongoFilterCriteria(criteria)
 			if err != nil {
 				m.Logger.Errorf("failed to build mongo query for collection filter criteria: %v", err)
 				return nil, fmt.Errorf("failed to build mongo query for collection filter criteria: %w", err)
 			}
+
 			if len(criteriaFilter) > 0 {
-				firstKey := criteriaFilter[0].Key
-				if strings.HasPrefix(firstKey, "$") {
-					filter = append(filter, bson.E{Key: firstKey, Value: criteriaFilter[0].Value})
-				} else {
-					filter = append(filter, bson.E{Key: "$and", Value: bson.A{criteriaFilter}})
-				}
+				orFilters = append(orFilters, criteriaFilter)
 			}
+		}
+
+		if len(orFilters) > 0 {
+			filter = append(filter, bson.E{
+				Key:   "$or",
+				Value: orFilters,
+			})
 		}
 	}
 

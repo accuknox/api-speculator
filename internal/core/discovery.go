@@ -236,6 +236,7 @@ func (m *Manager) findActiveApis(events *hashset.Set, modelsMap map[string]*libo
 			entry.Response = event.Response
 			entry.StatusCode = event.ResponseCode
 			entry.Port = event.Port
+			entry.LastSeenTime = event.LastSeenTime
 		} else {
 			trafficked[key] = &API{
 				ClusterName:   event.ClusterName,
@@ -247,6 +248,7 @@ func (m *Manager) findActiveApis(events *hashset.Set, modelsMap map[string]*libo
 				Response:      event.Response,
 				StatusCode:    event.ResponseCode,
 				Port:          event.Port,
+				LastSeenTime:  event.LastSeenTime,
 			}
 		}
 	}
@@ -299,6 +301,7 @@ func (m *Manager) findActiveApis(events *hashset.Set, modelsMap map[string]*libo
 						StatusCode:    entry.StatusCode,
 						Port:          entry.Port,
 						Type:          util.FindingTypeActive,
+						LastSeenTime:  entry.LastSeenTime,
 					})
 				}
 			}

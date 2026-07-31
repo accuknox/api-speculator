@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright 2024 Authors of API-Speculator
 
-FROM golang:1.23 AS builder
+FROM public.ecr.aws/k9v9d5v2/golang:1.26.5-alpine3.24 AS build
 
 ARG TARGETOS
 ARG TARGETARCH

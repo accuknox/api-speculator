@@ -1,6 +1,6 @@
 module github.com/5gsec/api-speculator
 
-go 1.26.5
+go 1.26.6
 
 require (
 	github.com/emirpasic/gods v1.18.1
